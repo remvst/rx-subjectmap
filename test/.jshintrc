@@ -1,0 +1,10 @@
+{
+    "node": true,
+    "esversion": 6,
+    "globals": {
+        "it": true,
+        "describe": true,
+        "expect": true,
+        "jasmine": true
+    }
+}
