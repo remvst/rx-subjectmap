@@ -23,12 +23,16 @@ describe('A subject map', () => {
         const map = new SubjectMap();
 
         const err = new Error('foo');
-        map.get('foo').subscribe(null, error => {
+        const subscription = map.get('foo').subscribe(null, error => {
             expect(error).toBe(err);
             done();
         });
 
+        expect(subscription.isStopped).toBe(false);
+
         map.error('foo', err);
+
+        expect(subscription.isStopped).toBe(true);
     });
 
     it('does not replay values if not subscribed to', done => {
@@ -100,7 +104,7 @@ describe('A subject map', () => {
 
     it('can have a fault handler that will only be called once', done => {
         const faultHandler = jasmine.createSpy('fault handler').andReturn(new Promise((resolve, reject) => {
-            setTimeout(() => resolve(1234), 500);
+            setTimeout(() => resolve(1234), 100);
         }));
 
         const map = new SubjectMap(faultHandler);
@@ -116,6 +120,35 @@ describe('A subject map', () => {
             // Subscribe again
             observable.subscribe(value => {
                 expect(value).toBe(1234);
+                expect(faultHandler.callCount).toBe(1);
+                done();
+            });
+        });
+
+        expect(faultHandler.callCount).toBe(1);
+
+        expect(faultHandler).toHaveBeenCalledWith('foo');
+    });
+
+    it('can have a fault handler that will fail', done => {
+        const error = new Error('yolo');
+        const faultHandler = jasmine.createSpy('fault handler').andReturn(new Promise((resolve, reject) => {
+            setTimeout(() => reject(error), 100);
+        }));
+
+        const map = new SubjectMap(faultHandler);
+
+        const observable = map.get('foo');
+        expect(faultHandler).not.toHaveBeenCalled();
+
+        observable.subscribe(null, err => expect(err).toBe(error));
+
+        observable.subscribe(null, err => {
+            expect(err).toBe(error);
+
+            // Subscribe again
+            observable.subscribe(null, err => {
+                expect(err).toBe(error);
                 expect(faultHandler.callCount).toBe(1);
                 done();
             });

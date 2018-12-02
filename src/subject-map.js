@@ -23,6 +23,7 @@ class SubjectMap {
     error(key, error) {
         const subject = this.underlyingSubjects[key];
         if (!subject) {
+            console.log('lol no subject');
             return;
         }
 
@@ -35,17 +36,12 @@ class SubjectMap {
             return subject; // binding already set up
         }
 
-        console.log('setup binding for ' + key);
-
         let subscriptionCount = 0;
 
         const underlying = new Rx.ReplaySubject(1);
 
         subject = Rx.Observable.create(observer => {
-            console.log('subscribing');
-
-            if (subscriptionCount === 0) {
-                console.log('first subscription, emit fault');
+            if (subscriptionCount++ === 0) {
                 this.underlyingSubjects[key] = underlying;
 
                 // TODO fault handler
@@ -56,15 +52,14 @@ class SubjectMap {
                 }
             }
 
-            subscriptionCount++;
-
-            underlying.subscribe(observer);
+            underlying.subscribe(
+                value => observer.next(value),
+                error => observer.error(error),
+                () => observer.complete()
+            );
 
             return () => {
-                subscriptionCount--;
-                console.log('unsubscribing');
-
-                if (subscriptionCount <= 0) {
+                if (--subscriptionCount <= 0) {
                     this.cleanup(key);
                 }
             };
@@ -76,7 +71,10 @@ class SubjectMap {
     }
 
     cleanup(key) {
-        console.log('cleaning up: ' + key);
+        const underlying = this.underlyingSubjects[key];
+        if (underlying) {
+            underlying.complete();
+        }
 
         delete this.subjects[key];
         delete this.underlyingSubjects[key];
