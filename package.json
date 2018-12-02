@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/subject-map.js",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node test"
+    "test": "./node_modules/.bin/jasmine-node test",
+    "coverage": "istanbul cover ./node_modules/.bin/jasmine-node test"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "rxjs": "^5.5.6"
   },
   "devDependencies": {
+    "istanbul": "^0.4.5",
     "jasmine": "^3.3.0",
     "jasmine-node": "^1.16.2"
   }

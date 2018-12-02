@@ -23,7 +23,6 @@ class SubjectMap {
     error(key, error) {
         const subject = this.underlyingSubjects[key];
         if (!subject) {
-            console.log('lol no subject');
             return;
         }
 
@@ -44,7 +43,6 @@ class SubjectMap {
             if (subscriptionCount++ === 0) {
                 this.underlyingSubjects[key] = underlying;
 
-                // TODO fault handler
                 if (this.faultHandler) {
                     this.faultHandler(key)
                         .then(value => this.next(key, value))

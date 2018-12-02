@@ -48,6 +48,19 @@ describe('A subject map', () => {
         map.next('foo', 5678);
     });
 
+    it('does not replay errors if not subscribed to', done => {
+        const map = new SubjectMap();
+
+        map.error('foo', new Error());
+
+        map.get('foo').subscribe(value => {
+            expect(value).toBe(5678);
+            done();
+        });
+
+        map.next('foo', 5678);
+    });
+
     it('does not replay values if subscription was killed', done => {
         const map = new SubjectMap();
 
