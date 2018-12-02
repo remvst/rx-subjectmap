@@ -171,4 +171,35 @@ describe('A subject map', () => {
 
         expect(faultHandler).toHaveBeenCalledWith('foo');
     });
+
+    it('can faultIfBound if anyone is bound to a key', done => {
+        let faultedValue = 1;
+        const faultHandler = jasmine.createSpy('fault handler').andCallFake(() => new Promise((resolve, reject) => {
+            resolve(faultedValue);
+        }));
+
+        const map = new SubjectMap(faultHandler);
+        const observable = map.get('foo');
+
+        map.faultIfBound('foo');
+        map.faultIfBound('bar');
+        expect(faultHandler).not.toHaveBeenCalled();
+
+        observable.subscribe();
+
+        expect(faultHandler.callCount).toBe(1);
+        expect(faultHandler).toHaveBeenCalledWith('foo');
+
+        map.faultIfBound('bar');
+        expect(faultHandler).not.toHaveBeenCalledWith('bar');
+
+        faultedValue++;
+        observable.skip(1).subscribe(value => {
+            expect(value).toBe(faultedValue);
+            done();
+        });
+
+        map.faultIfBound('foo');
+        expect(faultHandler.callCount).toBe(2);
+    });
 });

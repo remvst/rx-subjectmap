@@ -42,12 +42,7 @@ class SubjectMap {
         subject = Rx.Observable.create(observer => {
             if (subscriptionCount++ === 0) {
                 this.underlyingSubjects[key] = underlying;
-
-                if (this.faultHandler) {
-                    this.faultHandler(key)
-                        .then(value => this.next(key, value))
-                        .catch(error => this.error(key, error));
-                }
+                this.doFault(key);
             }
 
             underlying.subscribe(
@@ -76,6 +71,25 @@ class SubjectMap {
 
         delete this.subjects[key];
         delete this.underlyingSubjects[key];
+    }
+
+    faultIfBound(key) {
+        const underlying = this.underlyingSubjects[key];
+        if (!underlying) {
+            return;
+        }
+
+        this.doFault(key);
+    }
+
+    doFault(key) {
+        if (!this.faultHandler) {
+            return;
+        }
+
+        this.faultHandler(key)
+            .then(value => this.next(key, value))
+            .catch(error => this.error(key, error));
     }
 
 }
